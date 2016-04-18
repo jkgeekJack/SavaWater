@@ -7,6 +7,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -166,6 +167,11 @@ public class Store {
         messag.what=MainActivity.BAR_DATA;
         messag.obj=data;
         handler.handleMessage(messag);
+
+        messag=new Message();
+        messag.what= MainActivity.UPDATE_USE;
+        handler.handleMessage(messag);
+
         if (latest!=null){
             Message message=new Message();
             message.what=MainActivity.LATEST_TIME;
@@ -178,7 +184,6 @@ public class Store {
             message.what=MainActivity.MAX_ID;
             message.obj=maxid;
             handler.handleMessage(message);
-
         }
     }
 

@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements XScrollView.IXScr
     public static final int BAR_DATA=2;
     public static final int MAX_ID=3;
     public static final int SUM_USE=4;
+    public static final int UPDATE_USE=5;
 
     //初始化那个viewpager的view里面的控件。
     public BarDataSet dataset;
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements XScrollView.IXScr
         initDB();
 
         initBarData();
+        initUse();
         initListener();
 //        show();
         initTips();
@@ -124,6 +126,24 @@ public class MainActivity extends AppCompatActivity implements XScrollView.IXScr
         };
         viewPager.setAdapter(pagerAdapter);
 
+    }
+
+    private void initUse() {
+        String muid=uid+"";
+        if (time==0){
+            Sum newSum=new Sum();
+            newSum.setUid(uid);
+            newSum.setTotaluse(0);
+            db.save(newSum);
+        }
+//        List<Sum> Sumlist=db.findAll();
+        List<Sum> Sumlist=db.findAllByWhere(Sum.class,"uid="+muid);
+        if (Sumlist.size()>0){
+            tv_totaluse.setText(Sumlist.get(0).getTotaluse()+"");
+            tv_totalpro.setText(Sumlist.get(0).getTotaluse()*0.1+"");
+        }else {
+            tv_totaluse.setText("0");
+        }
     }
 
     private void initBarData() {
@@ -159,20 +179,13 @@ public class MainActivity extends AppCompatActivity implements XScrollView.IXScr
 
     private void initDB() {
         db=FinalDb.create(this,"tap.db");
-        String muid=uid+"";
-        List<Sum> Sumlist=db.findAll(Sum.class,"uid="+muid);
-        if (Sumlist.size()>0){
-            tv_totaluse.setText(Sumlist.get(0).getTotaluse()+"");
-        }else {
-            tv_totaluse.setText("0");
-        }
-
     }
 
     private void initSharedPreferences() {
         sharedPreferences=getSharedPreferences("sp",MODE_PRIVATE);
         editor=sharedPreferences.edit();
         time=sharedPreferences.getLong("time",0);
+
         Log.e("sptime",time+"");
         lastrefresh=sharedPreferences.getLong("lastrefresh",0);
 
@@ -217,21 +230,39 @@ public class MainActivity extends AppCompatActivity implements XScrollView.IXScr
                         }
                         break;
                     case SUM_USE:
+
                         if (msg.obj!=null){
                             Sum sum=new Sum();
-                            List<Sum> sumlist=db.findAll(Sum.class);
+//                            List<Sum> sumlist=db.findAll(Sum.class);
+                            String muid=uid+"";
+                            List<Sum>sumlist=db.findAllByWhere(Sum.class,"uid="+muid);
                             if (sumlist.size()==0){
                                 sum.setTotaluse((Double) msg.obj);
+                                sum.setUid(uid);
+                                db.save(sum);
                             }else {
-                                String muid=uid+"";
-                                List<Sum> sumlist2=db.findAllByWhere(Sum.class,"uid="+muid);
-                                int item_id=sumlist2.get(0).getId();
+//                                List<Sum> sumlist2=db.findAllByWhere(Sum.class,"uid="+muid);
+                                int item_id=sumlist.get(0).getId();
+                                Log.e("myid",item_id+"");
+                                Log.e("myuse",(double)msg.obj+"");
                                 sum.setId(item_id);
-                                sum.setTotaluse(sumlist2.get(0).getTotaluse()+(double)msg.obj);
+                                sum.setUid(uid);
+                                sum.setTotaluse(sumlist.get(0).getTotaluse()+(double)msg.obj);
+                                db.update(sum);
                             }
-                            db.save(sum);
+
                         }
                         break;
+                    case UPDATE_USE:
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                initUse();
+                            }
+                        });
+
+                        break;
+
                 }
 //                UpdateUI();
 //                Long latest =sharedPreferences.getLong("latestdate",0);
